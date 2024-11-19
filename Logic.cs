@@ -11,8 +11,6 @@
         public static char[,] PlayerField = new char[Width, Height];
         public static char[,] EnemyField = new char[Width, Height];
 
-        private static bool isInitialized = false;
-
         public enum Coordinates
         {
             a, b, c, d, e, f, g, h, i, j
@@ -109,14 +107,10 @@
         }
         public static void InitializationField()
         {
-            if (!isInitialized)
-            {
                 DrawField(Width, Height);
                 DrawShipsInField(PlayerField);
                 DrawShipsInField(EnemyField);
 
-                isInitialized = true;
-            }
         }
     }
 }
