@@ -1,22 +1,28 @@
-﻿using System;
-
-namespace SeaBattleRework
+﻿namespace SeaBattleRework
 {
     public class Logic
     {
         static int Width = 10;
         static int Height = 10;
-        static int CountShip = 5;
-        static bool YourStep = false;
+        public static int CountShip = 5;
+        public static bool YourStep = true;
+        static int X, Y;
 
-        static char[,] PlayerField = new char[Width, Height];
-        static char[,] EnemyField = new char[Width, Height];
+        public static char[,] PlayerField = new char[Width, Height];
+        public static char[,] EnemyField = new char[Width, Height];
 
-        public static void DrawField(int width, int height)
+        private static bool isInitialized = false;
+
+        public enum Coordinates
         {
-            for (int i = 0; i < height; i++)
+            a, b, c, d, e, f, g, h, i, j
+        }
+
+        public static void DrawField(int Width, int Height)
+        {
+            for (int i = 0; i < Height; i++)
             {
-                for (int j = 0; j < width; j++)
+                for (int j = 0; j < Width; j++)
                 {
                     PlayerField[i, j] = '.';
                     EnemyField[i, j] = '.';
@@ -27,21 +33,28 @@ namespace SeaBattleRework
         public static void DrawMarking(char[,] field)
         {
             Console.Write("  ");
-            for (int count = 1; count <= Width; count++)
+            for (int i = 1; i <= Width; i++)
             {
-                Console.Write(count + " ");
+                Console.Write(i + " ");
             }
             Console.WriteLine();
 
-            for (int row = 0; row < Height; row++)
+            for (int Row = 0; Row < Height; Row++)
             {
-                Console.Write((char)('a' + row) + " ");
-                for (int count = 0; count < Width; count++)
+                Console.Write((char)('a' + Row) + " ");
+                for (int i = 0; i < Width; i++)
                 {
-                    Console.Write(field[row, count] + " ");
+                    Console.Write(field[Row, i] + " ");
                 }
                 Console.WriteLine();
             }
+        }
+
+        public static void ShipPlace()
+        {
+            Random random = new Random();
+            X = random.Next(0, Height);
+            Y = random.Next(0, Width);
         }
 
         public static void DrawShipsInField(char[,] field)
@@ -50,9 +63,7 @@ namespace SeaBattleRework
 
             for (int i = 0; i < CountShip; i++)
             {
-                int X = random.Next(0, Height);
-                int Y = random.Next(0, Width);
-
+                ShipPlace();
                 if (field[X, Y] == '.')
                 {
                     field[X, Y] = 'U';
@@ -60,22 +71,52 @@ namespace SeaBattleRework
             }
         }
 
-        public static void InitializationField()
+        public static bool IsValidCoordinate(string input)
         {
-            DrawField(Width, Height);
-            
-            DrawShipsInField(PlayerField);
-            DrawShipsInField(EnemyField);
-            
-            if (YourStep != true)
-                DrawMarking(EnemyField);
-            else
-                DrawMarking(PlayerField);
+            input = input.Replace(" ", "");
+
+            return input.Length == 2 || input.Length == 3 && input[0] >= 'a' && input[0] <= 'j'
+                   && input[1] >= '1' && input[1] <= '9' && (input.Length == 2 || (input[2] >= '0' && input[2] <= '9'));
         }
 
-        public static void StartGame()
+
+        public static void GetInput(string input)
         {
-            InitializationField();
+            if (!IsValidCoordinate(input)) 
+                return;
+
+            char Word = input[0];
+            int number = int.Parse(input.Substring(1)) - 1;
+            int Row = (int)Enum.Parse(typeof(Coordinates), Word.ToString());
+            int Left = number;
+
+            if (YourStep)
+            {
+                if (EnemyField[Row, Left] == 'U')
+                    EnemyField[Row, Left] = 'X';
+                else
+                    EnemyField[Row, Left] = '#';
+            }
+            else
+            {
+                if (PlayerField[Row, Left] == 'U')
+                    PlayerField[Row, Left] = 'X';
+                else
+                    PlayerField[Row, Left] = '#';
+            }
+
+            YourStep = !YourStep;
+        }
+        public static void InitializationField()
+        {
+            if (!isInitialized)
+            {
+                DrawField(Width, Height);
+                DrawShipsInField(PlayerField);
+                DrawShipsInField(EnemyField);
+
+                isInitialized = true;
+            }
         }
     }
 }
