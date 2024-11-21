@@ -6,6 +6,7 @@
         static int Height = 10;
         public static int CountShip = 5;
         public static bool YourStep = true;
+        static bool Hit = false;
         static int X, Y;
 
         public static char[,] PlayerField = new char[Width, Height];
@@ -57,7 +58,7 @@
             }
         }
 
-        public static void ShipPlace()
+        public static void ShipCoords()
         {
             Random random = new Random();
             X = random.Next(0, Height);
@@ -69,7 +70,7 @@
 
             for (int i = 0; i < CountShip; i++)
             {
-                ShipPlace();
+                ShipCoords();
                 if (field[X, Y] == '.')
                 {
                     field[X, Y] = 'U';
@@ -77,35 +78,23 @@
             }
         }
 
-        public static bool IsValidCoordinate(string input)
+        public static bool ValidCoordinate(string input)
         {
             input = input.Replace(" ", "");
 
-            return input.Length == 2 || input.Length == 3 && input[0] >= 'a' && input[0] <= 'j'
-                   && input[1] >= '1' && input[1] <= '9' && (input.Length == 2 || (input[2] >= '0' && input[2] <= '9'));
+            if (input.Length < 2 || input.Length > 3) return false;
+
+            char rowChar = input[0];
+            if (rowChar < 'a' || rowChar > 'j') return false;
+
+            if (!int.TryParse(input.Substring(1), out int column)) return false;
+
+            return column >= 1 && column <= 10;
         }
 
-
-        public static void GetInput()
-        {
-            while (true)
-            {
-                Console.WriteLine("Enter coordinates (a-j 1-10):\t");
-                string input = Console.ReadLine();
-
-                if (IsValidCoordinate(input))
-                {
-                    CoordinateHandler(input);
-                    break;
-                }
-            }
-        }
-        
-        
         public static void CoordinateHandler(string input)
         {
-
-            if (!IsValidCoordinate(input)) 
+            if (!ValidCoordinate(input))
                 return;
 
             char Word = input[0];
@@ -113,23 +102,53 @@
             int Row = (int)Enum.Parse(typeof(Coordinates), Word.ToString());
             int Left = number;
 
+            if (Row < 0 || Row >= Height || Left < 0 || Left >= Width)
+                return;
+
             if (YourStep)
             {
                 if (EnemyField[Row, Left] == 'U')
+                {
                     EnemyField[Row, Left] = 'X';
-                else
+                    Hit = true;
+                }
+                else if (EnemyField[Row, Left] == '.')
+                {
                     EnemyField[Row, Left] = '#';
+                }
             }
             else
             {
                 if (PlayerField[Row, Left] == 'U')
+                {
                     PlayerField[Row, Left] = 'X';
-                else
+                    Hit = true;
+                }
+                else if (PlayerField[Row, Left] == '.')
+                {
                     PlayerField[Row, Left] = '#';
+                }
             }
-
-            YourStep = !YourStep;
+            if (!Hit)
+            {
+                YourStep = !YourStep;
+            }
         }
+
+        public static void GetInput()
+        {
+            while (true)
+            {
+                string input = Console.ReadLine();
+
+                if (ValidCoordinate(input))
+                {
+                    CoordinateHandler(input);
+                    break;
+                }
+            }
+        }
+
         public static void InitializationField()
         {
                 DrawField(Width, Height);
