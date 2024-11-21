@@ -82,20 +82,25 @@
         {
             input = input.Replace(" ", "");
 
-            if (input.Length < 2 || input.Length > 3) return false;
+            if (input.Length < 2 || input.Length > 3) 
+                return false;
 
             char rowChar = input[0];
-            if (rowChar < 'a' || rowChar > 'j') return false;
+            if (rowChar < 'a' || rowChar > 'j') 
+                return false;
 
-            if (!int.TryParse(input.Substring(1), out int column)) return false;
+            if (!int.TryParse(input.AsSpan(1), out int Col))
+                return false;
 
-            return column >= 1 && column <= 10;
+            return Col >= 1 && Col <= 10;
         }
 
         public static void CoordinateHandler(string input)
         {
             if (!ValidCoordinate(input))
                 return;
+            
+            Hit = false;
 
             char Word = input[0];
             int number = int.Parse(input.Substring(1)) - 1;
