@@ -13,7 +13,16 @@
 
         public enum Coordinates
         {
-            a, b, c, d, e, f, g, h, i, j
+            a, 
+            b, 
+            c, 
+            d, 
+            e, 
+            f, 
+            g, 
+            h, 
+            i, 
+            j
         }
 
         public static void DrawField(int Width, int Height)
@@ -57,7 +66,6 @@
 
         public static void DrawShipsInField(char[,] field)
         {
-            Random random = new Random();
 
             for (int i = 0; i < CountShip; i++)
             {
@@ -78,8 +86,25 @@
         }
 
 
-        public static void GetInput(string input)
+        public static void GetInput()
         {
+            while (true)
+            {
+                Console.WriteLine("Enter coordinates (a-j 1-10):\t");
+                string input = Console.ReadLine();
+
+                if (IsValidCoordinate(input))
+                {
+                    CoordinateHandler(input);
+                    break;
+                }
+            }
+        }
+        
+        
+        public static void CoordinateHandler(string input)
+        {
+
             if (!IsValidCoordinate(input)) 
                 return;
 
@@ -111,6 +136,21 @@
                 DrawShipsInField(PlayerField);
                 DrawShipsInField(EnemyField);
 
+        }
+
+        public static void ControlStepPlayer()
+        {
+            Console.Clear();
+            if (Logic.YourStep)
+            {
+                Console.WriteLine("Your turn:");
+                Logic.DrawMarking(EnemyField);
+            }
+            else
+            {
+                Console.WriteLine("Enemy turn:");
+                Logic.DrawMarking(PlayerField);
+            }
         }
     }
 }
