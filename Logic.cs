@@ -2,9 +2,11 @@
 {
     public class Logic
     {
-        static int Width = 10;
-        static int Height = 10;
+        const int Width = 10;
+        const int Height = 10;
         public static int CountShip = 5;
+        public static int KilledShipsEnemy = 0;
+        public static int KilledShipsPlayer = 0;
         public static bool YourStep = true;
         static bool Hit = false;
         static int X, Y;
@@ -116,6 +118,7 @@
                 {
                     EnemyField[Row, Left] = 'X';
                     Hit = true;
+                    KilledShipsEnemy++;
                 }
                 else if (EnemyField[Row, Left] == '.')
                 {
@@ -128,6 +131,7 @@
                 {
                     PlayerField[Row, Left] = 'X';
                     Hit = true;
+                    KilledShipsPlayer++;
                 }
                 else if (PlayerField[Row, Left] == '.')
                 {
@@ -154,14 +158,6 @@
             }
         }
 
-        public static void InitializationField()
-        {
-                DrawField(Width, Height);
-                DrawShipsInField(PlayerField);
-                DrawShipsInField(EnemyField);
-
-        }
-
         public static void ControlStepPlayer()
         {
             Console.Clear();
@@ -176,5 +172,28 @@
                 Logic.DrawMarking(PlayerField);
             }
         }
+        public static void CheckWin()
+        {
+            if (KilledShipsEnemy >= CountShip)
+            {
+                Console.WriteLine("Enemy won this game!");
+                Environment.Exit(0);
+            }
+            else if(KilledShipsPlayer >= CountShip) 
+            {
+            
+                Console.WriteLine("Player won this game!");
+                Environment.Exit(0);
+            }
+        }
+        public static void InitializationField()
+        {
+            DrawField(Width, Height);
+            DrawShipsInField(PlayerField);
+            DrawShipsInField(EnemyField);
+
+        }
+
+
     }
 }
