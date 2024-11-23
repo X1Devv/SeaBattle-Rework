@@ -9,34 +9,38 @@
         public static int KilledShipsPlayer = 0;
         public static bool YourStep = true;
         static bool Hit = false;
-        static int X, Y;
 
         public static char[,] PlayerField = new char[Width, Height];
         public static char[,] EnemyField = new char[Width, Height];
 
+        public static void InitializationField()
+        {
+            DrawField(PlayerField);
+            DrawField(EnemyField);
+            PlaceShips(PlayerField);
+            PlaceShips(EnemyField);
+        }
+
         public enum Coordinates
         {
-            a, 
-            b, 
-            c, 
-            d, 
-            e, 
-            f, 
-            g, 
-            h, 
-            i, 
+            a,
+            b,
+            c,
+            d,
+            e,
+            f,
+            g,
+            h,
+            i,
             j
         }
 
-        public static void DrawField(int Width, int Height)
+        public static void DrawField(char[,] field)
         {
             for (int i = 0; i < Height; i++)
             {
                 for (int j = 0; j < Width; j++)
-                {
-                    PlayerField[i, j] = '.';
-                    EnemyField[i, j] = '.';
-                }
+                    field[i, j] = '.';
             }
         }
 
@@ -44,156 +48,164 @@
         {
             Console.Write("  ");
             for (int i = 1; i <= Width; i++)
-            {
                 Console.Write(i + " ");
-            }
+
             Console.WriteLine();
 
             for (int Row = 0; Row < Height; Row++)
             {
                 Console.Write((char)('a' + Row) + " ");
-                for (int i = 0; i < Width; i++)
-                {
-                    Console.Write(field[Row, i] + " ");
-                }
+                for (int Left = 0; Left < Width; Left++)
+                    Console.Write(field[Row, Left] + " ");
+
                 Console.WriteLine();
             }
         }
 
-        public static void ShipCoords()
+        public static void PlaceShips(char[,] field)
         {
             Random random = new Random();
-            X = random.Next(0, Height);
-            Y = random.Next(0, Width);
-        }
 
-        public static void DrawShipsInField(char[,] field)
-        {
-
-            for (int i = 0; i < CountShip; i++)
+            for (int i = 0; i < CountShip;)
             {
-                ShipCoords();
-                if (field[X, Y] == '.')
+                int x = random.Next(0, Height);
+                int y = random.Next(0, Width);
+
+                if (field[x, y] == '.')
                 {
-                    field[X, Y] = 'U';
+                    field[x, y] = 'U';
+                    i++;
                 }
             }
+        }
+
+        public static void DrowField()
+        {
+            Console.Clear();
+            Console.WriteLine(YourStep ? "Player:" : "Enemy:");
+            DrawMarking(YourStep ? EnemyField : PlayerField);
+        }
+
+        public static void ControlStepPlayer()
+        {
+            string input = GetInput();
+            HandleCoordinate(input);
+        }
+
+        public static string GetInput()
+        {
+            string input;
+            while (true)
+            {
+                Console.WriteLine("Enter coordinates (a-j 1-10):");
+                input = Console.ReadLine();
+
+                if (ValidCoordinate(input))
+                    break;
+            }
+            return input;
         }
 
         public static bool ValidCoordinate(string input)
         {
             input = input.Replace(" ", "");
 
-            if (input.Length < 2 || input.Length > 3) 
+            if (input.Length < 2 || input.Length > 3)
                 return false;
 
-            char rowChar = input[0];
-            if (rowChar < 'a' || rowChar > 'j') 
+            char CharSymbol = input[0];
+            if (CharSymbol < 'a' || CharSymbol > 'j')
                 return false;
 
-            if (!int.TryParse(input.AsSpan(1), out int Col))
+            if (!int.TryParse(input.AsSpan(1), out int Left))
                 return false;
 
-            return Col >= 1 && Col <= 10;
+            return Left >= 1 && Left <= 10;
         }
 
-        public static void CoordinateHandler(string input)
+        public static void HandleCoordinate(string input)
         {
-            if (!ValidCoordinate(input))
-                return;
-            
             Hit = false;
 
-            char Word = input[0];
-            int number = int.Parse(input.Substring(1)) - 1;
-            int Row = (int)Enum.Parse(typeof(Coordinates), Word.ToString());
-            int Left = number;
+            char CharSymbol = input[0];
+            int Left = int.Parse(input.Substring(1)) - 1;
+            int Row = (int)Enum.Parse(typeof(Coordinates), CharSymbol.ToString());
 
-            if (Row < 0 || Row >= Height || Left < 0 || Left >= Width)
-                return;
+            LogicHitShips(Row, Left);
+        }
 
+        public static void LogicHitShips(int Row, int Left)
+        {
             if (YourStep)
-            {
-                if (EnemyField[Row, Left] == 'U')
-                {
-                    EnemyField[Row, Left] = 'X';
-                    Hit = true;
-                    KilledShipsEnemy++;
-                }
-                else if (EnemyField[Row, Left] == '.')
-                {
-                    EnemyField[Row, Left] = '#';
-                }
-            }
+                UpdateField(EnemyField, Row, Left, ref KilledShipsEnemy);
             else
-            {
-                if (PlayerField[Row, Left] == 'U')
-                {
-                    PlayerField[Row, Left] = 'X';
-                    Hit = true;
-                    KilledShipsPlayer++;
-                }
-                else if (PlayerField[Row, Left] == '.')
-                {
-                    PlayerField[Row, Left] = '#';
-                }
-            }
+                UpdateField(PlayerField, Row, Left, ref KilledShipsPlayer);
+
             if (!Hit)
-            {
                 YourStep = !YourStep;
+        }
+
+        private static void UpdateField(char[,] field, int Row, int Left, ref int KilledShips)
+        {
+            if (field[Row, Left] == 'U')
+            {
+                field[Row, Left] = 'X';
+                Hit = true;
+                KilledShips++;
+                CheckShipsAndFillGridsAround(field, Row, Left, ref KilledShips);
+            }
+            else if (field[Row, Left] == '.')
+            {
+                field[Row, Left] = '#';
             }
         }
 
-        public static void GetInput()
+        public static void CheckShipsAndFillGridsAround(char[,] field, int Row, int Left, ref int KilledShips)
         {
-            while (true)
+            for (int dx = -1; dx <= 1; dx++)
             {
-                string input = Console.ReadLine();
-
-                if (ValidCoordinate(input))
+                for (int dy = -1; dy <= 1; dy++)
                 {
-                    CoordinateHandler(input);
-                    break;
+                    int newRow = Row + dx;
+                    int newLeft = Left + dy;
+
+                    if (newRow >= 0 && newRow < Height && newLeft >= 0 && newLeft < Width)
+                    {
+                        if (field[newRow, newLeft] == 'U')
+                        {
+                            field[newRow, newLeft] = 'X';
+                            KilledShips++;
+                        }
+                        else if (field[newRow, newLeft] == '.')
+                        {
+                            field[newRow, newLeft] = '#';
+                        }
+                    }
                 }
             }
         }
 
-        public static void ControlStepPlayer()
+        public static bool CheckGame()
         {
-            Console.Clear();
-            if (Logic.YourStep)
+            if (KilledShipsEnemy >= CountShip || KilledShipsPlayer >= CountShip)
             {
-                Console.WriteLine("Your turn:");
-                Logic.DrawMarking(EnemyField);
+                EndGame();
+                return false;
             }
-            else
-            {
-                Console.WriteLine("Enemy turn:");
-                Logic.DrawMarking(PlayerField);
-            }
+            return true;
         }
-        public static void CheckWin()
+
+        private static void EndGame()
         {
             if (KilledShipsEnemy >= CountShip)
             {
-                Console.WriteLine("Enemy won this game!");
-                Environment.Exit(0);
-            }
-            else if(KilledShipsPlayer >= CountShip) 
-            {
-            
                 Console.WriteLine("Player won this game!");
-                Environment.Exit(0);
             }
+            else if (KilledShipsPlayer >= CountShip)
+            {
+                Console.WriteLine("Enemy won this game!");
+            }
+            Environment.Exit(0);
         }
-        public static void InitializationField()
-        {
-            DrawField(Width, Height);
-            DrawShipsInField(PlayerField);
-            DrawShipsInField(EnemyField);
-
-        }
-
-
     }
 }

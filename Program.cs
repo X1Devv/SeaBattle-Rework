@@ -6,14 +6,10 @@ class Program
     {
         Logic.InitializationField();
 
-        while (true)
+        while (Logic.CheckGame())
         {
-            Console.Clear();
+            Logic.DrowField();
             Logic.ControlStepPlayer();
-            Console.WriteLine("Enter coordinates (a-j 1-10):\t");
-            Logic.GetInput();
-            Logic.CheckWin();
-
         }
     }
 }
