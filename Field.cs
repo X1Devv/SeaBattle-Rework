@@ -2,10 +2,10 @@
 {
     public const int Width = 10;
     public const int Height = 10;
-    const char EmptyCell = '.';
-    const char ShipCell = 'U';
-    const char HitCell = 'X';
-    const char FillCell = '#';
+    public const char EmptyCell = '.';
+    public const char ShipCell = 'U';
+    public const char HitCell = 'X';
+    public const char FillCell = '#';
 
     char[,] grid = new char[Width, Height];
 
@@ -28,82 +28,79 @@
         Random random = new Random();
         for (int i = 0; i < count;)
         {
-            
-            int Row = random.Next(0, Height);
-            int Col = random.Next(0, Width);
+            int row = random.Next(0, Height);
+            int col = random.Next(0, Width);
 
-            if (grid[Row, Col] == EmptyCell)
+            if (grid[row, col] == EmptyCell)
             {
-                grid[Row, Col] = ShipCell;
+                grid[row, col] = ShipCell;
                 i++;
             }
         }
     }
 
-    public bool LogicHit(int Row, int Col, out bool Hit)
+    public bool LogicHit(int row, int col, out bool ShipHit)
     {
-        Hit = false;
+        ShipHit = false;
 
-        if (grid[Row, Col] == ShipCell)
+        if (grid[row, col] == ShipCell)
         {
-            grid[Row, Col] = HitCell;
-            Hit = true;
-
-            DrawGridAround(Row, Col);
-            CheckShipsAround(Row, Col);
-
+            grid[row, col] = HitCell;
+            ShipHit = true;
+            DrawGridAround(row, col);
+            CheckShipsAround(row, col);
             return true;
         }
-        else if (grid[Row, Col] == EmptyCell)
+        else if (grid[row, col] == EmptyCell)
         {
-            grid[Row, Col] = FillCell;
+            grid[row, col] = FillCell;
             return true;
         }
 
         return false;
     }
 
-    public void DrawGridAround(int Row, int Col)
+
+    public void DrawGridAround(int row, int col)
     {
         for (int dx = -1; dx <= 1; dx++)
         {
             for (int dy = -1; dy <= 1; dy++)
             {
-                int NewRow = Row + dx;
-                int NewCol = Col + dy;
+                int newRow = row + dx;
+                int newCol = col + dy;
 
-                if (NewRow >= 0 && NewRow < Height && NewCol >= 0 && NewCol < Width)
+                if (newRow >= 0 && newRow < Height && newCol >= 0 && newCol < Width)
                 {
-                    if (grid[NewRow, NewCol] == EmptyCell)
+                    if (grid[newRow, newCol] == EmptyCell)
                     {
-                        grid[NewRow, NewCol] = FillCell;
-                    }
-                }
-            }
-        }
-    }
-    public void CheckShipsAround(int Row, int Col)
-    {
-        for (int dx = -1; dx <= 1; dx++)
-        {
-            for (int dy = -1; dy <= 1; dy++)
-            {
-                int NewRow = Row + dx;
-                int NewCol = Col + dy;
-
-                if (NewRow >= 0 && NewRow < Height && NewCol >= 0 && NewCol < Width)
-                {
-                    if (grid[NewRow, NewCol] == ShipCell)
-                    {
-                        grid[NewRow, NewCol] = HitCell;
-                        DrawGridAround(NewRow, NewCol);
+                        grid[newRow, newCol] = FillCell;
                     }
                 }
             }
         }
     }
 
+    public void CheckShipsAround(int row, int col)
+    {
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                int newRow = row + dx;
+                int newCol = col + dy;
 
+                if (newRow >= 0 && newRow < Height && newCol >= 0 && newCol < Width)
+                {
+                    if (grid[newRow, newCol] == ShipCell)
+                    {
+                        grid[newRow, newCol] = HitCell;
+                        DrawGridAround(newRow, newCol);
+                    }
+                }
+            }
+        }
+    }
 
     public void Draw(bool hideShips = true)
     {
@@ -113,17 +110,22 @@
 
         Console.WriteLine();
 
-        for (int Row = 0; Row < Height; Row++)
+        for (int row = 0; row < Height; row++)
         {
-            Console.Write((char)('a' + Row) + " ");
-            for (int Col = 0; Col < Width; Col++)
+            Console.Write((char)('a' + row) + " ");
+            for (int col = 0; col < Width; col++)
             {
-                char cell = grid[Row, Col];
+                char cell = grid[row, col];
                 Console.Write((hideShips && cell == ShipCell ? EmptyCell : cell) + " ");
             }
 
             Console.WriteLine();
         }
+    }
+
+    public char PeekCell(int row, int col)
+    {
+        return grid[row, col];
     }
 
     public bool AllShipsKilled()

@@ -5,19 +5,11 @@
         Game game = new Game();
         game.InitializeGame();
 
-        Player player1 = new Player(game, 1);
-        Player player2 = new Player(game, 2);
-
-        while (!game.CheckEndGame())
+        while (!game.IsGameOver)
         {
-            if (game.YourStep)
-            {
-                player1.HandleTurn();
-            }
-            else
-            {
-                player2.HandleTurn();
-            }
+            game.Render();
+            game.HandleInput();
+            game.CheckEndGame();
         }
     }
 }
