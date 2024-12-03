@@ -1,21 +1,7 @@
-﻿public class Player
+﻿public class Player(bool isAI, int shipCount)
 {
-    public Field PlayerField { get; private set; }
-    public Weapon CurrentWeapon { get; set; }
-    public bool AIPlayer { get; private set; }
-
-    public Player(bool isAI = false)
-    {
-        PlayerField = new Field();
-        CurrentWeapon = new Bomb();
-        AIPlayer = isAI;
-    }
-
-    public void DisplayFields(Field EnemyField)
-    {
-        Console.WriteLine("Player Field:");
-        PlayerField.Draw(false);
-        Console.WriteLine("Enemy Field:");
-        EnemyField.Draw(true);
-    }
+    public Field PlayerField { get; set; } = new Field();//візуалка зроблиа більш скорочений варіант запису
+    public string LastInput { get; set; }
+    public bool IsAI { get; set; } = isAI;
+    public int ShipCount { get; set; } = shipCount;
 }
