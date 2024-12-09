@@ -2,16 +2,15 @@
 {
     static void Main(string[] args)
     {
-        //config=================
         int shipCount = 8;
         int fieldWidth = 10;
         int fieldHeight = 10;
-        int MaxWin = 3;
-        string gameMod = "pve";//pvp pve eve
-        //config=================
+        int maxWins = 3;
+        string gameMode = "pvp";
 
-        var (player1, player2, render) = FactoryPlayers.CreateGame(shipCount, fieldWidth, fieldHeight, gameMod);
+        var factory = new FactoryPlayer();
+        var (player1, player2, render) = factory.CreateGame(shipCount, fieldWidth, fieldHeight, gameMode);
 
-        new Game(player1, player2, render, MaxWin).Start();
+        new Game(player1, player2, render, maxWins).Start();
     }
 }

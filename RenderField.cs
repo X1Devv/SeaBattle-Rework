@@ -1,4 +1,4 @@
-﻿public class RenderField //виніс рендер для абстракції
+﻿public class RenderField
 {
     public void Render(Field field, bool hideShips)
     {

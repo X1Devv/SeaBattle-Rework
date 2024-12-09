@@ -1,40 +1,45 @@
 ﻿public class Game
 {
-    Player _player1;
-    Player _player2;
-    Player _currentPlayer;
-    Player _opponent;
-    RenderField _render;
+    private Player _player1;
+    private Player _player2;
+    private Player _currentPlayer;
+    private Player _opponent;
+    private RenderField _render;
     private int _maxWinsToFinish;
     private int _player1Wins;
     private int _player2Wins;
 
-    public Game(Player player1, Player player2, RenderField render, int MaxWinsToFinish)
+    public Game(Player player1, Player player2, RenderField render, int maxWinsToFinish)
     {
         _player1 = player1;
         _player2 = player2;
         _render = render;
-        _maxWinsToFinish = MaxWinsToFinish;
+        _maxWinsToFinish = maxWinsToFinish;
+
         _currentPlayer = _player1;
-        _opponent = _player2;//змінив назву минула була _enemy
+        _opponent = _player2;
     }
 
     public void Start()
     {
         while (_player1Wins < _maxWinsToFinish && _player2Wins < _maxWinsToFinish)
         {
-            ResetGame();
-            GameCycle();
-
-            if (Winner(_player1))
-                _player1Wins++;
-            else
-                _player2Wins++;
-
-            Console.WriteLine($"Wins Player1 > {_player1Wins} Wins Player2 > {_player2Wins}");
+            PlayRound();
         }
 
-        Console.WriteLine(_player1Wins == _maxWinsToFinish ? "Player 1 end this game" : "Player 1 end this game");
+        Console.WriteLine(_player1Wins == _maxWinsToFinish ? "Player 1 wins the game!" : "Player 2 wins the game!");
+    }
+
+    private void PlayRound()
+    {
+        ResetGame();
+        GameCycle();
+
+        if (Winner(_player1))
+            _player1Wins++;
+        else
+            _player2Wins++;
+
     }
 
     private void ResetGame()
@@ -51,49 +56,45 @@
     {
         while (!GameOver())
         {
-            ProcessInput();
-            Logic();
+            var (row, col) = ProcessInput();
+            Logic(row, col);
             Render();
         }
 
-        DisplayRoundWinner();
+        DisplayWinner();
     }
 
-    private void ProcessInput()
+    private (int Row, int Col) ProcessInput()
     {
         if (_currentPlayer.IsAI)
         {
-            _currentPlayer.LastInput = GenerateRandomInput();
-            Thread.Sleep(100);
-            return;
+            return GenerateRandomInput();
         }
 
+        Console.WriteLine("Enter coordinates (a-j 1-10):");
         string? input;
         do
         {
-            Console.WriteLine("Enter coordinates (a-j 1-10):");
             input = Console.ReadLine()?.Trim();
         } while (!ValidCoordinate(input));
 
-        _currentPlayer.LastInput = input;
+        return ParseInput(input!);
     }
-    private string GenerateRandomInput()
+
+    private (int Row, int Col) GenerateRandomInput()
     {
         Random random = new Random();
-        char row = (char)('a' + random.Next(0, Field.Height));
-        int col = random.Next(1, Field.Width + 1);
-        return $"{row}{col}";
+        int row = random.Next(0, Field.Height);
+        int col = random.Next(0, Field.Width);
+        return (row, col);
     }
 
-    private void Logic()
+    private void Logic(int row, int col)
     {
-        var (row, col) = ParseInput(_currentPlayer.LastInput);
-
         if (!_opponent.PlayerField.IsCellAttackable(row, col))
             return;
 
         bool hit = _opponent.PlayerField.ProcessAttack(row, col);
-
         if (!hit)
             SwitchPlayers();
     }
@@ -101,17 +102,15 @@
     private void Render()
     {
         Console.Clear();
-        Console.WriteLine($"Player 1 Wins: {_player1Wins} | Player 2 Wins: {_player2Wins}");
+        Console.WriteLine($"Player 1 Wins: {_player1Wins}, Player 2 Wins: {_player2Wins}");
         Console.WriteLine($"Current Player: {(_currentPlayer == _player1 ? "Player 1" : "Player 2")}");
         _render.Render(_currentPlayer.PlayerField, false);
-        Console.WriteLine();
         _render.Render(_opponent.PlayerField, true);
     }
 
-    private void DisplayRoundWinner()
+    private void DisplayWinner()
     {
-        Console.WriteLine($"Winner of this round: {(_currentPlayer == _player1 ? "Player 1" : "Player 2")}");
-        Thread.Sleep(3000);
+        Console.WriteLine($"{(_currentPlayer == _player1 ? "Player 1" : "Player 2")} win");
     }
 
     private void SwitchPlayers() => (_currentPlayer, _opponent) = (_opponent, _currentPlayer);
@@ -127,20 +126,19 @@
         return (row, col);
     }
 
-    private bool ValidCoordinate(string input)
+    private bool ValidCoordinate(string? input)
     {
-        input = input.Replace(" ", "");
-
-        if (input.Length < 2 || input.Length > 3)
+        if (string.IsNullOrEmpty(input) || input.Length < 3 || input.Length > 4)
             return false;
 
         char row = input[0];
-        if (row < 'a' || row > 'j')
+        if (row < 'a' || row >= 'a' + Field.Height)
             return false;
 
-        if (!int.TryParse(input.Substring(1), out int col))
+        if (!int.TryParse(input.Substring(2), out int col) || col < 1 || col > Field.Width)
             return false;
 
-        return col >= 1 && col <= Field.Width;
+        return true;
     }
+
 }
