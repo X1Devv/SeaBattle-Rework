@@ -56,8 +56,7 @@
     {
         while (!GameOver())
         {
-            var (row, col) = ProcessInput();
-            Logic(row, col);
+            Logic(ProcessInput());
             Render();
         }
 
@@ -89,8 +88,10 @@
         return (row, col);
     }
 
-    private void Logic(int row, int col)
+    private void Logic((int Row, int Col) coordinates)
     {
+        var (row, col) = coordinates;
+
         if (!_opponent.PlayerField.IsCellAttackable(row, col))
             return;
 
