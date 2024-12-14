@@ -44,7 +44,7 @@ public class Game
         }
 
         if (_saveEnabled)
-            SaveStats();
+            SaveGame();
     }
 
     private void PlayRound()
@@ -204,15 +204,6 @@ public class Game
         using (StreamWriter writer = new StreamWriter(_file, append: true))
         {
             writer.Write(data);
-        }
-    }
-
-    private void SaveStats()
-    {
-        string stats = $"{_player1Wins}|{_player2Wins}|{_player1.Wins},{_player1.Losses},{_player1.MMR}|{_player2.Wins},{_player2.Losses},{_player2.MMR}\n";
-        using (StreamWriter writer = new StreamWriter(_file, append: true))
-        {
-            writer.Write(stats);
         }
     }
 
