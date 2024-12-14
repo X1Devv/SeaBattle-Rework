@@ -1,4 +1,7 @@
-﻿public class Game
+﻿using System;
+using System.IO;
+
+public class Game
 {
     private Player _player1;
     private Player _player2;
@@ -8,26 +11,40 @@
     private int _maxWinsToFinish;
     private int _player1Wins;
     private int _player2Wins;
+    private bool _saveEnabled;
+    private string _file;
 
-    public Game(Player player1, Player player2, RenderField render, int maxWinsToFinish)
+    public Game(Player player1, Player player2, RenderField render, int maxWinsToFinish, bool saveEnabled)
     {
         _player1 = player1;
         _player2 = player2;
         _render = render;
         _maxWinsToFinish = maxWinsToFinish;
+        _saveEnabled = saveEnabled;
 
         _currentPlayer = _player1;
         _opponent = _player2;
+
+        _file = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "game_data.txt");
+
+        LoadStats();
     }
 
     public void Start()
     {
+        if (!File.Exists(_file))
+        {
+            using (var stream = File.Create(_file)) { }
+            InitializeStats();
+        }
+
         while (_player1Wins < _maxWinsToFinish && _player2Wins < _maxWinsToFinish)
         {
             PlayRound();
         }
 
-        Console.WriteLine(_player1Wins == _maxWinsToFinish ? "Player 1 wins the game!" : "Player 2 wins the game!");
+        if (_saveEnabled)
+            SaveStats();
     }
 
     private void PlayRound()
@@ -36,10 +53,20 @@
         GameCycle();
 
         if (Winner(_player1))
+        {
             _player1Wins++;
+            _player1.RecordWin();
+            _player2.RecordLoss();
+        }
         else
+        {
             _player2Wins++;
+            _player2.RecordWin();
+            _player1.RecordLoss();
+        }
 
+        if (_saveEnabled)
+            SaveGame();
     }
 
     private void ResetGame()
@@ -50,6 +77,16 @@
         _player2.PlayerField.PlaceRandomShips(_player2.ShipCount);
         _currentPlayer = _player1;
         _opponent = _player2;
+    }
+    private void InitializeStats()
+    {
+        _player1.MMR = 1000;
+        _player1.Wins = 0;
+        _player1.Losses = 0;
+
+        _player2.MMR = 1000;
+        _player2.Wins = 0;
+        _player2.Losses = 0;
     }
 
     private void GameCycle()
@@ -103,15 +140,34 @@
     private void Render()
     {
         Console.Clear();
-        Console.WriteLine($"Player 1 Wins: {_player1Wins}, Player 2 Wins: {_player2Wins}");
+        RenderPlayerStats(_player1, _player2);
         Console.WriteLine($"Current Player: {(_currentPlayer == _player1 ? "Player 1" : "Player 2")}");
         _render.Render(_currentPlayer.PlayerField, false);
         _render.Render(_opponent.PlayerField, true);
     }
 
+    private void RenderPlayerStats(Player player1, Player player2)
+    {
+        double winRate1 = CalculateWinRate(player1);
+        Console.WriteLine($"Player 1>Wins: {_player1Wins}, Losses> {player1.Losses}, MMR> {player1.MMR}, Win Rate>{winRate1:F2}%");
+
+        double winRate2 = CalculateWinRate(player2);
+        Console.WriteLine($"Player 2>Wins: {_player2Wins}, Losses> {player2.Losses}, MMR> {player2.MMR}, Win Rate> {winRate2:F2}%");
+
+        Console.WriteLine();
+    }
+
+    private double CalculateWinRate(Player player)
+    {
+        int totalGames = player.Wins + player.Losses;
+        if (totalGames == 0)
+            return 0;
+        return (double)player.Wins / totalGames * 100;
+    }
+
     private void DisplayWinner()
     {
-        Console.WriteLine($"{(_currentPlayer == _player1 ? "Player 1" : "Player 2")} win");
+        Console.WriteLine($"{(_currentPlayer == _player1 ? "Player 1" : "Player 2")} wins the round");
     }
 
     private void SwitchPlayers() => (_currentPlayer, _opponent) = (_opponent, _currentPlayer);
@@ -142,4 +198,47 @@
         return true;
     }
 
+    private void SaveGame()
+    {
+        string data = $"{_player1Wins}|{_player2Wins}|{_player1.Wins},{_player1.Losses},{_player1.MMR}|{_player2.Wins},{_player2.Losses},{_player2.MMR}\n";
+        using (StreamWriter writer = new StreamWriter(_file, append: true))
+        {
+            writer.Write(data);
+        }
+    }
+
+    private void SaveStats()
+    {
+        string stats = $"{_player1Wins}|{_player2Wins}|{_player1.Wins},{_player1.Losses},{_player1.MMR}|{_player2.Wins},{_player2.Losses},{_player2.MMR}\n";
+        using (StreamWriter writer = new StreamWriter(_file, append: true))
+        {
+            writer.Write(stats);
+        }
+    }
+
+    public void LoadStats()
+    {
+        if (File.Exists(_file))
+        {
+            var lines = File.ReadAllLines(_file);
+            foreach (var line in lines)
+            {
+                string[] parts = line.Split('|');
+                if (parts.Length > 3)
+                {
+                    string[] player1Stats = parts[2].Split(',');
+                    _player1.MMR = int.Parse(player1Stats[2]);
+                    _player1.Wins = int.Parse(player1Stats[0]);
+                    _player1.Losses = int.Parse(player1Stats[1]);
+
+                    string[] player2Stats = parts[3].Split(',');
+                    _player2.MMR = int.Parse(player2Stats[2]);
+                    _player2.Wins = int.Parse(player2Stats[0]);
+                    _player2.Losses = int.Parse(player2Stats[1]);
+                }
+            }
+        }
+        else
+            InitializeStats();
+    }
 }
