@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-
-public class Game
+﻿public class Game
 {
     private Player _player1;
     private Player _player2;
@@ -12,7 +9,7 @@ public class Game
     private int _player1Wins;
     private int _player2Wins;
     private bool _saveEnabled;
-    private string _file;
+    private GameDataManager _gameDataManager;
 
     public Game(Player player1, Player player2, RenderField render, int maxWinsToFinish, bool saveEnabled)
     {
@@ -25,19 +22,13 @@ public class Game
         _currentPlayer = _player1;
         _opponent = _player2;
 
-        _file = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "game_data.txt");
+        _gameDataManager = new GameDataManager(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "game_data.json"));
 
         LoadStats();
     }
 
     public void Start()
     {
-        if (!File.Exists(_file))
-        {
-            using (var stream = File.Create(_file)) { }
-            InitializeStats();
-        }
-
         while (_player1Wins < _maxWinsToFinish && _player2Wins < _maxWinsToFinish)
         {
             PlayRound();
@@ -77,16 +68,6 @@ public class Game
         _player2.PlayerField.PlaceRandomShips(_player2.ShipCount);
         _currentPlayer = _player1;
         _opponent = _player2;
-    }
-    private void InitializeStats()
-    {
-        _player1.MMR = 1000;
-        _player1.Wins = 0;
-        _player1.Losses = 0;
-
-        _player2.MMR = 1000;
-        _player2.Wins = 0;
-        _player2.Losses = 0;
     }
 
     private void GameCycle()
@@ -149,10 +130,10 @@ public class Game
     private void RenderPlayerStats(Player player1, Player player2)
     {
         double winRate1 = CalculateWinRate(player1);
-        Console.WriteLine($"Player 1>Wins: {_player1Wins}, Losses> {player1.Losses}, MMR> {player1.MMR}, Win Rate>{winRate1:F2}%");
+        Console.WriteLine($"Player 1>Wins: {_player1Wins}, Losses> {player1.Losses}, Rating> {player1.Rating}, Win Rate>{winRate1:F2}%");
 
         double winRate2 = CalculateWinRate(player2);
-        Console.WriteLine($"Player 2>Wins: {_player2Wins}, Losses> {player2.Losses}, MMR> {player2.MMR}, Win Rate> {winRate2:F2}%");
+        Console.WriteLine($"Player 2>Wins: {_player2Wins}, Losses> {player2.Losses}, Rating> {player2.Rating}, Win Rate> {winRate2:F2}%");
 
         Console.WriteLine();
     }
@@ -200,36 +181,40 @@ public class Game
 
     private void SaveGame()
     {
-        string data = $"{_player1Wins}|{_player2Wins}|{_player1.Wins},{_player1.Losses},{_player1.MMR}|{_player2.Wins},{_player2.Losses},{_player2.MMR}\n";
-        using (StreamWriter writer = new StreamWriter(_file, append: true))
+        var gameStats = new GameStats
         {
-            writer.Write(data);
-        }
+            Player1Wins = _player1Wins,
+            Player2Wins = _player2Wins,
+            Player1Stats = new PlayerStats
+            {
+                Wins = _player1.Wins,
+                Losses = _player1.Losses,
+                Rating = _player1.Rating
+            },
+            Player2Stats = new PlayerStats
+            {
+                Wins = _player2.Wins,
+                Losses = _player2.Losses,
+                Rating = _player2.Rating
+            }
+        };
+
+        _gameDataManager.SaveGame(gameStats);
     }
 
     public void LoadStats()
     {
-        if (File.Exists(_file))
-        {
-            var lines = File.ReadAllLines(_file);
-            foreach (var line in lines)
-            {
-                string[] parts = line.Split('|');
-                if (parts.Length > 3)
-                {
-                    string[] player1Stats = parts[2].Split(',');
-                    _player1.MMR = int.Parse(player1Stats[2]);
-                    _player1.Wins = int.Parse(player1Stats[0]);
-                    _player1.Losses = int.Parse(player1Stats[1]);
+        var gameStats = _gameDataManager.LoadGame();
 
-                    string[] player2Stats = parts[3].Split(',');
-                    _player2.MMR = int.Parse(player2Stats[2]);
-                    _player2.Wins = int.Parse(player2Stats[0]);
-                    _player2.Losses = int.Parse(player2Stats[1]);
-                }
-            }
-        }
-        else
-            InitializeStats();
+        _player1Wins = gameStats.Player1Wins;
+        _player2Wins = gameStats.Player2Wins;
+
+        _player1.Wins = gameStats.Player1Stats.Wins;
+        _player1.Losses = gameStats.Player1Stats.Losses;
+        _player1.Rating = gameStats.Player1Stats.Rating;
+
+        _player2.Wins = gameStats.Player2Stats.Wins;
+        _player2.Losses = gameStats.Player2Stats.Losses;
+        _player2.Rating = gameStats.Player2Stats.Rating;
     }
 }

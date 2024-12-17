@@ -5,7 +5,7 @@
     public bool IsAI { get; set; }
     public int Wins { get; set; }
     public int Losses { get; set; }
-    public int MMR { get; set; }
+    public int Rating { get; set; }
 
     public Player(bool isAI, int shipCount)
     {
@@ -13,18 +13,18 @@
         ShipCount = shipCount;
         Wins = 0;
         Losses = 0;
-        MMR = 1000;
+        Rating = 1000;
     }
 
     public void RecordWin()
     {
         Wins++;
-        MMR += 20;
+        Rating += 20;
     }
 
     public void RecordLoss()
     {
         Losses++;
-        MMR -= 15;
+        Rating -= 15;
     }
 }
